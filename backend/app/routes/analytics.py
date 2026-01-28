@@ -82,9 +82,7 @@ async def get_student_stats(
                 detail="Access denied: Cannot access other students' stats"
             )
 
-        total_exercises = db.query(Progress).filter(
-            Progress.student_id == student_id
-        ).count()
+        total_exercises = db.query(Exercise).count()
 
         completed_exercises = db.query(Progress).filter(
             Progress.student_id == student_id,
@@ -188,30 +186,42 @@ async def get_all_students_analytics(
                 Progress.student_id == student.id
             ).count()
 
-            completed_exercises = db.query(Progress).filter(
-                Progress.student_id == student.id,
-                Progress.status.in_(["completed", "mastered"])
+            from app.models.models import QuizSubmission
+            quizzes_passed = db.query(QuizSubmission).filter(
+                QuizSubmission.student_id == student.id,
+                QuizSubmission.passed == True
             ).count()
-
-            score_data = db.query(Progress).filter(
-                Progress.student_id == student.id,
-                Progress.best_score != None
-            ).all()
 
             average_score = sum(p.best_score for p in score_data) / len(score_data) if score_data else 0
 
+            # Format last active for display
+            last_active_str = "Never"
+            if student.updated_at:
+                # Simple relative time approximation for display
+                from datetime import datetime
+                diff = datetime.utcnow() - student.updated_at
+                if diff.days > 0:
+                    last_active_str = f"{diff.days} days ago"
+                elif diff.seconds > 3600:
+                    last_active_str = f"{diff.seconds // 3600} hours ago"
+                elif diff.seconds > 60:
+                    last_active_str = f"{diff.seconds // 60} mins ago"
+                else:
+                    last_active_str = "Just now"
+
             result.append({
-                "student_id": student.id,
+                "id": student.id,
                 "name": student.name,
                 "email": student.email,
                 "grade_level": student.grade_level,
+                "exercises_completed": completed_exercises,
+                "quizzes_passed": quizzes_passed,
+                "last_active": last_active_str,
                 "total_exercises": total_exercises,
-                "completed_exercises": completed_exercises,
-                "average_score": average_score,
-                "last_activity": student.updated_at
+                "average_score": average_score
             })
 
-        return {"students": result}
+        return result
     except Exception as e:
         logger.error(f"Get all students analytics error: {str(e)}")
         raise HTTPException(

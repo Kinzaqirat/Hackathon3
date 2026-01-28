@@ -17,17 +17,25 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { fetchStats, fetchTopics, fetchLevels, fetchExercises, fetchQuizzes } from "@/lib/api";
+import { fetchStats, fetchTopics, fetchLevels, fetchExercises, fetchQuizzes, Exercise, Quiz } from "@/lib/api";
 
 export default function Dashboard() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [topics, setTopics] = useState<any[]>([]);
   const [levels, setLevels] = useState<any[]>([]);
-  const [recentExercises, setRecentExercises] = useState<any[]>([]);
-  const [availableQuizzes, setAvailableQuizzes] = useState<any[]>([]);
+  const [recentExercises, setRecentExercises] = useState<Exercise[]>([]);
+  const [availableQuizzes, setAvailableQuizzes] = useState<Quiz[]>([]);
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [streak, setStreak] = useState(5); // Example streak
+
+  const isNew = (dateString: string | undefined) => {
+    if (!dateString) return false;
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+    return diffInHours < 48; // New if created in last 48 hours
+  };
 
   useEffect(() => {
     async function loadData() {
@@ -35,16 +43,16 @@ export default function Dashboard() {
 
       try {
         const [statsData, topicsData, levelsData, exercisesData, quizzesData] = await Promise.all([
-          fetchStats(user.id).catch(() => null), // Use actual user ID
-          fetchTopics().catch(() => []),
-          fetchLevels().catch(() => []),
-          fetchExercises().catch(() => []),
-          fetchQuizzes().catch(() => [])
+          fetchStats(user.id).catch(() => null),
+          fetchTopics().catch(() => ([] as any[])),
+          fetchLevels().catch(() => ([] as any[])),
+          fetchExercises().catch(() => ([] as any[])),
+          fetchQuizzes().catch(() => ([] as any[]))
         ]);
 
         if (statsData) setStats(statsData);
-        if (topicsData) setTopics(topicsData);
-        if (levelsData) setLevels(levelsData);
+        if (topicsData) setTopics(topicsData as any[]);
+        if (levelsData) setLevels(levelsData as any[]);
         if (exercisesData) setRecentExercises(exercisesData.slice(0, 3));
         if (quizzesData) setAvailableQuizzes(quizzesData.slice(0, 2));
       } catch (error) {
@@ -119,7 +127,7 @@ export default function Dashboard() {
                   className={cn("h-full rounded-full bg-emerald-500")}
                   style={{
                     width: stat.name.includes("Exercises") && stats?.total_exercises ? `${(stats.completed_exercises / stats.total_exercises) * 100}%` :
-                          stat.name.includes("Quizzes") && stats?.total_quizzes ? `${(stats.passed_quizzes / stats.total_quizzes) * 100}%` : '65%'
+                      stat.name.includes("Quizzes") && stats?.total_quizzes ? `${(stats.passed_quizzes / stats.total_quizzes) * 100}%` : '65%'
                   }}
                 />
               </div>
@@ -179,7 +187,12 @@ export default function Dashboard() {
             <div className="space-y-3">
               {recentExercises.map((exercise) => (
                 <Link key={exercise.id} href={`/exercises/${exercise.id}`} className="block">
-                  <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors">
+                  <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors relative overflow-hidden">
+                    {isNew(exercise.created_at) && (
+                      <div className="absolute top-0 right-0 bg-primary text-[8px] font-black px-2 py-0.5 rounded-bl-lg uppercase tracking-widest text-white shadow-sm z-10">
+                        New
+                      </div>
+                    )}
                     <div>
                       <div className="font-medium">{exercise.title}</div>
                       <div className="text-sm text-muted-foreground">{exercise.topic}</div>
@@ -198,8 +211,10 @@ export default function Dashboard() {
           {/* Weekly Progress */}
           <div className="rounded-3xl border bg-card shadow-sm p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-black tracking-tight">Weekly Progress</h2>
-              <span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-black text-emerald-700 uppercase tracking-widest">On Track</span>
+              <h2 className="text-xl font-black tracking-tight">Overall Progress</h2>
+              <span className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-black text-emerald-700 uppercase tracking-widest">
+                {stats?.completed_exercises >= stats?.total_exercises * 0.8 ? "Master" : "On Track"}
+              </span>
             </div>
             <div className="flex items-center justify-center py-6">
               <div className="relative flex h-32 w-32 items-center justify-center">
@@ -210,7 +225,7 @@ export default function Dashboard() {
                     stroke="currentColor"
                     strokeWidth="10"
                     strokeDasharray={345}
-                    strokeDashoffset={345 - (345 * 0.75)}
+                    strokeDashoffset={345 - (345 * (stats?.total_exercises ? (stats.completed_exercises / stats.total_exercises) : 0))}
                     strokeLinecap="round"
                     fill="transparent"
                     r="55"
@@ -219,13 +234,17 @@ export default function Dashboard() {
                   />
                 </svg>
                 <div className="absolute flex flex-col items-center">
-                  <span className="text-3xl font-black">75%</span>
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Goal Met</span>
+                  <span className="text-3xl font-black">{stats?.total_exercises ? Math.round((stats.completed_exercises / stats.total_exercises) * 100) : 0}%</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Complete</span>
                 </div>
               </div>
             </div>
             <p className="text-center text-sm text-muted-foreground font-medium px-4">
-              Great job! You've completed <span className="text-foreground font-bold">12</span> Python exercises this week.
+              {stats?.completed_exercises > 0 ? (
+                <>Great job! You've completed <span className="text-foreground font-bold">{stats?.completed_exercises}</span> Python exercises so far.</>
+              ) : (
+                <>Start your Python journey! You have <span className="text-foreground font-bold">{stats?.total_exercises || 0}</span> exercises waiting for you.</>
+              )}
             </p>
           </div>
 
@@ -237,7 +256,12 @@ export default function Dashboard() {
             <div className="space-y-3">
               {availableQuizzes.map((quiz) => (
                 <Link key={quiz.id} href={`/quizzes/${quiz.id}`} className="block">
-                  <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors">
+                  <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent transition-colors relative overflow-hidden">
+                    {isNew(quiz.created_at) && (
+                      <div className="absolute top-0 right-0 bg-primary text-[8px] font-black px-2 py-0.5 rounded-bl-lg uppercase tracking-widest text-white shadow-sm z-10">
+                        New
+                      </div>
+                    )}
                     <div>
                       <div className="font-medium">{quiz.title}</div>
                       <div className="text-sm text-muted-foreground">{quiz.description}</div>

@@ -109,6 +109,11 @@ class QuizResponse(QuizBase):
     updated_at: datetime
     questions: Optional[List[QuizQuestionResponse]] = None
     
+    # Enrichment fields for teacher dashboard
+    student_count: Optional[int] = None
+    completed_count: Optional[int] = None
+    avg_score: Optional[float] = None
+    
     model_config = ConfigDict(from_attributes=True)
 
 

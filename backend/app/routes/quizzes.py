@@ -502,21 +502,57 @@ async def get_submission(
         )
 
 
-@router.get("/teacher", response_model=list[QuizResponse])
+@router.get("/teacher", response_model=list[dict])
 async def get_teacher_quizzes(
     current_teacher_id: int = Depends(get_current_teacher_id),
     db: Session = Depends(get_db)
 ):
-    """Get all quizzes created by the current teacher"""
+    """Get all quizzes created by the current teacher with statistics"""
     try:
+        from sqlalchemy import func
         # Get all quizzes created by this teacher
         quizzes = db.query(Quiz).filter(Quiz.teacher_id == current_teacher_id).all()
-        return quizzes
-    except HTTPException:
-        raise
+        
+        result = []
+        for quiz in quizzes:
+            # Stats for this quiz
+            total_submissions = db.query(QuizSubmission).filter(QuizSubmission.quiz_id == quiz.id).count()
+            completed_submissions = db.query(QuizSubmission).filter(
+                QuizSubmission.quiz_id == quiz.id,
+                QuizSubmission.completed_at != None
+            ).count()
+            
+            avg_score = db.query(func.avg(QuizSubmission.score)).filter(
+                QuizSubmission.quiz_id == quiz.id,
+                QuizSubmission.score != None
+            ).scalar() or 0
+            
+            # For student count, we might want to know how many students are assigned or total students
+            # Let's say it's total students for now as a baseline
+            total_students = db.query(Student).count()
+            
+            quiz_dict = {
+                "id": quiz.id,
+                "title": quiz.title,
+                "description": quiz.description,
+                "topic_id": quiz.topic_id,
+                "level_id": quiz.level_id,
+                "teacher_id": quiz.teacher_id,
+                "passing_score": quiz.passing_score,
+                "time_limit_minutes": quiz.time_limit_minutes,
+                "shuffle_questions": quiz.shuffle_questions,
+                "created_at": quiz.created_at,
+                "updated_at": quiz.updated_at,
+                "student_count": total_students,
+                "completed_count": completed_submissions,
+                "avg_score": round(float(avg_score), 1)
+            }
+            result.append(quiz_dict)
+            
+        return result
     except Exception as e:
         logger.error(f"Get teacher quizzes error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch teacher quizzes"
+            detail="Failed to fetch teacher quizzes with stats"
         )

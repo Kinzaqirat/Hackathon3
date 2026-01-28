@@ -9,7 +9,8 @@ import {
     ChevronRight,
     Code2,
     Lock,
-    Zap
+    Zap,
+    Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -269,12 +270,20 @@ export default function ExercisesPage() {
                                             20m
                                         </span>
                                     </div>
-                                    <Link
-                                        href={`/exercises/${exercise.id}`}
-                                        className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 transition-all hover:scale-110 active:scale-95"
-                                    >
-                                        <ChevronRight size={22} />
-                                    </Link>
+                                    <div className="flex gap-2">
+                                        <Link
+                                            href={`/exercises/${exercise.id}`}
+                                            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 transition-all hover:scale-110 active:scale-95"
+                                        >
+                                            <ChevronRight size={22} />
+                                        </Link>
+                                        <Link
+                                            href="/ai-demo"
+                                            className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-500 text-white shadow-lg shadow-blue-500/30 transition-all hover:scale-110 active:scale-95"
+                                        >
+                                            <Sparkles size={22} />
+                                        </Link>
+                                    </div>
                                 </div>
                             </div>
                         );

@@ -1,5 +1,31 @@
 import { authenticatedJsonFetch, API_BASE_URL } from './api-utils';
 
+export interface Exercise {
+    id: number;
+    title: string;
+    description: string;
+    difficulty_level: string;
+    topic: string;
+    starter_code?: string;
+    expected_output?: string;
+    test_cases?: any[];
+    hints?: string[];
+    created_at?: string;
+    updated_at?: string;
+}
+
+export interface Quiz {
+    id: number;
+    title: string;
+    description: string;
+    topic_id?: number;
+    level_id?: number;
+    passing_score?: number;
+    time_limit_minutes?: number;
+    questions?: any[];
+    created_at?: string;
+}
+
 export async function fetchStats(studentId: number) {
     try {
         const response = await authenticatedJsonFetch(`${API_BASE_URL}/analytics/student/${studentId}/stats`);
@@ -57,9 +83,9 @@ export async function fetchProgress(studentId: number) {
     }
 }
 
-export async function fetchExercises() {
+export async function fetchExercises(): Promise<Exercise[]> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/exercises`);
+        const response = await authenticatedJsonFetch<Exercise[]>(`${API_BASE_URL}/exercises`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
@@ -106,7 +132,7 @@ export async function fetchExercise(id: string | number) {
         // Match the mock data to the exercise ID to ensure consistency with dashboard
         const exerciseId = typeof id === 'string' ? parseInt(id) : id;
 
-        switch(exerciseId) {
+        switch (exerciseId) {
             case 1:
                 return {
                     id: 1,
@@ -206,7 +232,7 @@ export async function fetchTopics(levelId?: number) {
     }
 }
 
-export async function fetchQuizzes(topicId?: number, levelId?: number) {
+export async function fetchQuizzes(topicId?: number, levelId?: number): Promise<Quiz[]> {
     try {
         let url = `${API_BASE_URL}/quizzes/`;
         const params = new URLSearchParams();
@@ -214,7 +240,7 @@ export async function fetchQuizzes(topicId?: number, levelId?: number) {
         if (levelId) params.append("level_id", levelId.toString());
         if (params.toString()) url += `?${params.toString()}`;
 
-        const response = await authenticatedJsonFetch(url);
+        const response = await authenticatedJsonFetch<Quiz[]>(url);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
