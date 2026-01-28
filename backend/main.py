@@ -23,6 +23,8 @@ from app.routes import (
 
 from app.routes.teacher_dashboard import router as teacher_dashboard_router
 from app.services.kafka_service import KafkaService
+from app.services.enhanced_kafka_service import EnhancedKafkaService
+from app.services.dapr_service import DaprService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -37,13 +39,22 @@ async def lifespan(app: FastAPI):
     logger.info("Starting LearnFlow API...")
     init_db()
     logger.info("Database initialized")
-    
+
+    # Initialize Dapr if available
+    try:
+        # Test Dapr connectivity
+        with DaprService.get_client():
+            logger.info("Dapr initialized successfully")
+    except Exception as e:
+        logger.warning(f"Dapr not available: {str(e)}. Continuing without Dapr.")
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down LearnFlow API...")
     await KafkaService.close_producer()
-    logger.info("Kafka producer closed")
+    await EnhancedKafkaService.close_producer()  # Close enhanced service producer too
+    logger.info("Kafka producers closed")
 
 
 # Create FastAPI application
