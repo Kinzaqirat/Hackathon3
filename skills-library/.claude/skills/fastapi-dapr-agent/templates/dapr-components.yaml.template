@@ -1,0 +1,30 @@
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: {{SERVICE_NAME}}-statestore
+  namespace: learnflow
+spec:
+  type: state.redis
+  version: v1
+  metadata:
+  - name: redisHost
+    value: "redis.learnflow.svc.cluster.local:6379"
+  - name: redisPassword
+    value: ""
+  - name: actorStateStore
+    value: "false"
+
+---
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: {{SERVICE_NAME}}-pubsub
+  namespace: learnflow
+spec:
+  type: pubsub.kafka
+  version: v1
+  metadata:
+  - name: brokers
+    value: "kafka.learnflow.svc.cluster.local:9092"
+  - name: consumerGroup
+    value: "{{SERVICE_NAME}}-group"
