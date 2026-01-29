@@ -9,10 +9,10 @@ import { sendChatMessage, fetchChatMessages, createChatSession } from "@/lib/api
 import { AICodeService, CodeSuggestion } from "@/lib/ai-code-service";
 
 interface AIInsight {
-  type: 'suggestion' | 'warning' | 'error' | 'optimization';
-  message: string;
-  line?: number;
-  position?: number;
+    type: 'suggestion' | 'warning' | 'error' | 'optimization';
+    message: string;
+    line?: number;
+    position?: number;
 }
 
 interface AiCodeEditorProps {
@@ -53,7 +53,7 @@ export function AiCodeEditor({
     const [completionSuggestions, setCompletionSuggestions] = useState<CodeSuggestion[]>([]);
     const [showCompletionDropdown, setShowCompletionDropdown] = useState(false);
     const [selectedCompletionIndex, setSelectedCompletionIndex] = useState(0);
-    const [debuggingInfo, setDebuggingInfo] = useState<{line: number, message: string}[]>([]);
+    const [debuggingInfo, setDebuggingInfo] = useState<{ line: number, message: string }[]>([]);
     const [showDebugger, setShowDebugger] = useState(false);
     const editorRef = useRef<any>(null);
     const aiService = useRef<AICodeService>(AICodeService.getInstance());
@@ -114,30 +114,34 @@ export function AiCodeEditor({
 
         setAiLoading(true);
         try {
-            // Send code to AI for analysis
-            const prompt = `Analyze this ${language} code and provide suggestions for improvement, potential bugs, or optimizations. Code:\n\n${value}`;
+            // Add completions to the global monaco instance if available
+            const monaco = (window as any).monaco;
+            if (monaco) {
+                // Send code to AI for analysis
+                const prompt = `Analyze this ${language} code and provide suggestions for improvement, potential bugs, or optimizations. Code:\n\n${value}`;
 
-            // Use the session ID from the AI service
-            const mockSessionId = 999; // In a real implementation, we'd have a proper session
-            await sendChatMessage(mockSessionId, prompt);
+                // Use the session ID from the AI service
+                const mockSessionId = 999; // In a real implementation, we'd have a proper session
+                await sendChatMessage(mockSessionId, prompt);
 
-            // For demo purposes, we'll use mock responses
-            // In a real implementation, we'd get the actual response
+                // For demo purposes, we'll use mock responses
+                // In a real implementation, we'd get the actual response
 
-            // Mock response for demo
-            const mockResponse = `Here are some suggestions for your ${language} code:
+                // Mock response for demo
+                const mockResponse = `Here are some suggestions for your ${language} code:
 - Consider adding comments to explain complex logic
 - Use list comprehensions for simpler iterations
 - Handle potential exceptions in file operations
 - Follow PEP 8 naming conventions`;
 
-            // Parse AI response for suggestions
-            const suggestions = parseAiResponse(mockResponse);
-            setAiSuggestions(suggestions);
+                // Parse AI response for suggestions
+                const suggestions = parseAiResponse(mockResponse);
+                setAiSuggestions(suggestions);
 
-            // Extract insights
-            const insights = extractInsights(mockResponse);
-            setAiInsights(insights);
+                // Extract insights
+                const insights = extractInsights(mockResponse);
+                setAiInsights(insights);
+            }
         } catch (error) {
             console.error("Error getting AI suggestions:", error);
             setAiInsights([{ type: 'error', message: 'Failed to get AI suggestions. Please try again.' }]);
@@ -195,7 +199,7 @@ export function AiCodeEditor({
                     }
                     return null;
                 })
-                .filter(Boolean) as {line: number, message: string}[];
+                .filter(Boolean) as { line: number, message: string }[];
 
             setDebuggingInfo(debugLines);
             setShowDebugger(debugLines.length > 0);
@@ -260,8 +264,9 @@ export function AiCodeEditor({
         setIsEditorReady(true);
 
         // Add Ctrl/Cmd+Enter shortcut for running code
+        const monaco = (window as any).monaco;
         editor.addCommand(
-            window.monaco.KeyMod.CtrlCmd | window.monaco.KeyCode.Enter,
+            monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
             () => {
                 if (!readOnly && value) {
                     handleRun();
@@ -271,7 +276,7 @@ export function AiCodeEditor({
 
         // Add Ctrl/Cmd+Shift+I for AI insights
         editor.addCommand(
-            window.monaco.KeyMod.CtrlCmd | window.monaco.KeyMod.Shift | window.monaco.KeyCode.KEY_I,
+            monaco.KeyMod.CtrlCmd | monaco.KeyMod.Shift | monaco.KeyCode.KEY_I,
             () => {
                 getAiSuggestions();
             }
@@ -302,11 +307,12 @@ export function AiCodeEditor({
 
             // Simple insertion - in a real implementation, this would be more sophisticated
             const model = editor.getModel();
-            if (model) {
+            const monaco = (window as any).monaco;
+            if (model && monaco) {
                 model.pushEditOperations(
                     [],
                     [{
-                        range: new window.monaco.Range(
+                        range: new monaco.Range(
                             position.lineNumber,
                             position.column,
                             position.lineNumber,
@@ -340,7 +346,7 @@ export function AiCodeEditor({
 
     // Get icon based on insight type
     const getInsightIcon = (type: string) => {
-        switch(type) {
+        switch (type) {
             case 'error': return <Bug className="h-4 w-4 text-red-500" />;
             case 'warning': return <Wrench className="h-4 w-4 text-yellow-500" />;
             case 'optimization': return <Sparkles className="h-4 w-4 text-blue-500" />;
@@ -479,11 +485,10 @@ export function AiCodeEditor({
                                 {completionSuggestions.map((suggestion, index) => (
                                     <div
                                         key={index}
-                                        className={`p-2 cursor-pointer rounded-sm text-sm ${
-                                            index === selectedCompletionIndex
-                                                ? 'bg-accent text-accent-foreground'
-                                                : 'hover:bg-muted'
-                                        }`}
+                                        className={`p-2 cursor-pointer rounded-sm text-sm ${index === selectedCompletionIndex
+                                            ? 'bg-accent text-accent-foreground'
+                                            : 'hover:bg-muted'
+                                            }`}
                                         onClick={() => insertCompletion(suggestion)}
                                     >
                                         <div className="font-medium">{suggestion.label}</div>
@@ -506,12 +511,11 @@ export function AiCodeEditor({
                                 {aiInsights.map((insight, index) => (
                                     <div key={index} className="flex items-start gap-2 mb-1 last:mb-0">
                                         {getInsightIcon(insight.type)}
-                                        <span className={`text-xs ${
-                                            insight.type === 'error' ? 'text-red-600' :
+                                        <span className={`text-xs ${insight.type === 'error' ? 'text-red-600' :
                                             insight.type === 'warning' ? 'text-yellow-600' :
-                                            insight.type === 'optimization' ? 'text-blue-600' :
-                                            'text-green-600'
-                                        }`}>
+                                                insight.type === 'optimization' ? 'text-blue-600' :
+                                                    'text-green-600'
+                                            }`}>
                                             {insight.message}
                                         </span>
                                     </div>

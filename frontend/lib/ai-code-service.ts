@@ -46,18 +46,26 @@ export class AICodeService {
     try {
       // Create a prompt for code completion
       const prompt = this.buildCompletionPrompt(request);
-      
+
       // Send the prompt to the AI
+      if (this.sessionId === null) {
+        return [];
+      }
       await sendChatMessage(this.sessionId, prompt);
-      
+
       // Get the response
+      // Add null check before calling fetchChatMessages
+      if (this.sessionId === null) {
+        console.warn('Session ID is null, cannot fetch chat messages.');
+        return [];
+      }
       const messages = await fetchChatMessages(this.sessionId);
       const aiResponse = messages[messages.length - 1];
-      
+
       if (aiResponse && aiResponse.role === 'assistant') {
         return this.parseCompletionResponse(aiResponse.content);
       }
-      
+
       return [];
     } catch (error) {
       console.error('Error getting AI code completions:', error);
@@ -79,11 +87,11 @@ Provide 3-5 relevant code completions that would logically follow.`;
   private parseCompletionResponse(response: string): CodeSuggestion[] {
     // Simple parsing of AI response - in a real implementation, this would be more sophisticated
     const suggestions: CodeSuggestion[] = [];
-    
+
     // Look for code blocks in the response
     const codeBlockRegex = /```(?:\w+)?\s*([\s\S]*?)```/g;
     let match;
-    
+
     while ((match = codeBlockRegex.exec(response)) !== null) {
       const code = match[1].trim();
       if (code) {
@@ -96,7 +104,7 @@ Provide 3-5 relevant code completions that would logically follow.`;
         });
       }
     }
-    
+
     // If no code blocks found, try to extract suggestions from plain text
     if (suggestions.length === 0) {
       const lines = response.split('\n');
@@ -115,7 +123,7 @@ Provide 3-5 relevant code completions that would logically follow.`;
         }
       }
     }
-    
+
     return suggestions;
   }
 

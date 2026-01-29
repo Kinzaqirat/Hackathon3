@@ -26,9 +26,36 @@ export interface Quiz {
     created_at?: string;
 }
 
-export async function fetchStats(studentId: number) {
+export interface ChatSession {
+    id: number;
+    student_id: number;
+    topic: string;
+    agent_type: string;
+    is_active: boolean;
+    created_at: string;
+}
+
+export interface StudentStats {
+    total_xp: number;
+    completed_exercises: number;
+    total_exercises: number;
+    passed_quizzes: number;
+    total_quizzes: number;
+    average_score: number;
+    total_time_spent_minutes: number;
+}
+
+export interface StudentProgress {
+    exercise_id: number;
+    status: string;
+    best_score: number;
+    attempts: number;
+    last_attempt?: string;
+}
+
+export async function fetchStats(studentId: number): Promise<StudentStats> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/analytics/student/${studentId}/stats`);
+        const response = await authenticatedJsonFetch<StudentStats>(`${API_BASE_URL}/analytics/student/${studentId}/stats`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
@@ -68,18 +95,18 @@ export async function fetchStats(studentId: number) {
     }
 }
 
-export async function fetchProgress(studentId: number) {
+export async function fetchProgress(studentId: number): Promise<StudentProgress[]> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/analytics/student/${studentId}/progress`);
+        const response = await authenticatedJsonFetch<StudentProgress[]>(`${API_BASE_URL}/analytics/student/${studentId}/progress`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
         // Return mock data for development when backend is not available
-        return {
-            overall_completion: 60,
-            current_streak: 5,
-            weekly_goals: { completed: 4, total: 7 }
-        };
+        return [
+            { exercise_id: 1, status: "completed", best_score: 100, attempts: 1 },
+            { exercise_id: 2, status: "completed", best_score: 85, attempts: 2 },
+            { exercise_id: 3, status: "in_progress", best_score: 0, attempts: 1 }
+        ];
     }
 }
 
@@ -122,9 +149,9 @@ export async function fetchExercises(): Promise<Exercise[]> {
     }
 }
 
-export async function fetchExercise(id: string | number) {
+export async function fetchExercise(id: string | number): Promise<Exercise> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/exercises/${id}`);
+        const response = await authenticatedJsonFetch<Exercise>(`${API_BASE_URL}/exercises/${id}`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
@@ -198,36 +225,32 @@ export async function fetchExercise(id: string | number) {
     }
 }
 
-export async function fetchLevels() {
+export async function fetchLevels(): Promise<any[]> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/topics/levels`);
+        const response = await authenticatedJsonFetch<any[]>(`${API_BASE_URL}/levels`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
         // Return mock data for development when backend is not available
         return [
-            { id: 1, name: "Beginner", description: "Start your Python journey with fundamentals", order: 1 },
-            { id: 2, name: "Intermediate", description: "Build more complex applications", order: 2 },
-            { id: 3, name: "Advanced", description: "Master advanced Python concepts", order: 3 },
-            { id: 4, name: "Expert", description: "Become a Python expert", order: 4 }
+            { id: 1, name: "Beginner", description: "Start your Python journey", order: 1 },
+            { id: 2, name: "Intermediate", description: "Deep dive into features", order: 2 },
+            { id: 3, name: "Advanced", description: "Master the language", order: 3 }
         ];
     }
 }
 
-export async function fetchTopics(levelId?: number) {
+export async function fetchTopics(): Promise<any[]> {
     try {
-        const url = levelId ? `${API_BASE_URL}/topics/?level_id=${levelId}` : `${API_BASE_URL}/topics/`;
-        const response = await authenticatedJsonFetch(url);
+        const response = await authenticatedJsonFetch<any[]>(`${API_BASE_URL}/topics`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
         // Return mock data for development when backend is not available
         return [
-            { id: 1, name: "Introduction to Python", description: "Learn what Python is and set up your environment", level_id: 1 },
-            { id: 2, name: "Variables and Data Types", description: "Master variables, strings, numbers, and boolean types", level_id: 1 },
-            { id: 3, name: "Operators and Expressions", description: "Learn arithmetic, comparison, logical, and assignment operators", level_id: 1 },
-            { id: 4, name: "Control Flow - If Statements", description: "Make decisions with if, elif, and else statements", level_id: 1 },
-            { id: 5, name: "Loops - For and While", description: "Repeat code with for and while loops", level_id: 1 }
+            { id: 1, name: "Introduction", description: "Python basics" },
+            { id: 2, name: "Data Structures", description: "Lists, Dicts, etc." },
+            { id: 3, name: "Functions", description: "Reusable code" }
         ];
     }
 }
@@ -267,9 +290,9 @@ export async function fetchQuizzes(topicId?: number, levelId?: number): Promise<
     }
 }
 
-export async function createChatSession(studentId: number, topic?: string, agentType: string = "general") {
+export async function createChatSession(studentId: number, topic?: string, agentType: string = "general"): Promise<ChatSession> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/chat/sessions/?student_id=${studentId}&topic=${topic || ''}&agent_type=${agentType}`, {
+        const response = await authenticatedJsonFetch<ChatSession>(`${API_BASE_URL}/chat/sessions/?student_id=${studentId}&topic=${topic || ''}&agent_type=${agentType}`, {
             method: "POST",
         });
         return response;
@@ -287,9 +310,9 @@ export async function createChatSession(studentId: number, topic?: string, agent
     }
 }
 
-export async function fetchChatMessages(sessionId: number) {
+export async function fetchChatMessages(sessionId: number): Promise<any[]> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/chat/sessions/${sessionId}/messages`);
+        const response = await authenticatedJsonFetch<any[]>(`${API_BASE_URL}/chat/sessions/${sessionId}/messages`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
@@ -306,16 +329,11 @@ export async function fetchChatMessages(sessionId: number) {
     }
 }
 
-export async function sendChatMessage(sessionId: number, content: string) {
+export async function sendChatMessage(sessionId: number, content: string): Promise<any> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/chat/sessions/${sessionId}/messages`, {
+        const response = await authenticatedJsonFetch<any>(`${API_BASE_URL}/chat/sessions/${sessionId}/messages`, {
             method: "POST",
-            body: JSON.stringify({
-                session_id: sessionId,  // Include session_id in body as expected by backend schema
-                role: "user",           // Include role as expected by backend schema
-                content: content,
-                message_metadata: {}    // Include optional field as expected by backend schema
-            }),
+            body: JSON.stringify({ content }),
         });
         return response;
     } catch (error) {
@@ -332,9 +350,9 @@ export async function sendChatMessage(sessionId: number, content: string) {
 }
 
 // Quiz API functions
-export async function startQuiz(quizId: number, studentId: number) {
+export async function startQuiz(quizId: number, studentId: number): Promise<any> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/quizzes/${quizId}/start?student_id=${studentId}`, {
+        const response = await authenticatedJsonFetch<any>(`${API_BASE_URL}/quizzes/${quizId}/start?student_id=${studentId}`, {
             method: "POST",
         });
         return response;
@@ -353,11 +371,14 @@ export async function startQuiz(quizId: number, studentId: number) {
     }
 }
 
-export async function submitQuizAnswer(quizId: number, submissionId: number, questionId: number, answer: string) {
+export async function submitQuizAnswer(submissionId: number, questionId: number, answerIndex: number): Promise<any> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/quizzes/${quizId}/submissions/${submissionId}/answer`, {
+        const response = await authenticatedJsonFetch<any>(`${API_BASE_URL}/quizzes/submissions/${submissionId}/answer`, {
             method: "POST",
-            body: JSON.stringify({ question_id: questionId, answer_text: answer }),
+            body: JSON.stringify({
+                question_id: questionId,
+                selected_option_index: answerIndex,
+            }),
         });
         return response;
     } catch (error) {
@@ -367,16 +388,16 @@ export async function submitQuizAnswer(quizId: number, submissionId: number, que
             id: Date.now(),
             submission_id: submissionId,
             question_id: questionId,
-            answer_text: answer,
+            answer_text: answerIndex.toString(), // Mocking answer_text from answerIndex
             is_correct: false,
             points_earned: 0
         };
     }
 }
 
-export async function completeQuiz(quizId: number, submissionId: number) {
+export async function completeQuiz(submissionId: number): Promise<any> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/quizzes/${quizId}/submissions/${submissionId}/complete`, {
+        const response = await authenticatedJsonFetch<any>(`${API_BASE_URL}/quizzes/submissions/${submissionId}/complete`, {
             method: "POST",
         });
         return response;
@@ -386,7 +407,7 @@ export async function completeQuiz(quizId: number, submissionId: number) {
         return {
             id: submissionId,
             student_id: 1,
-            quiz_id: quizId,
+            quiz_id: 1,
             started_at: new Date().toISOString(),
             completed_at: new Date().toISOString(),
             score: 85,
@@ -395,9 +416,9 @@ export async function completeQuiz(quizId: number, submissionId: number) {
     }
 }
 
-export async function getQuizSubmission(quizId: number, submissionId: number) {
+export async function getQuizSubmission(submissionId: number): Promise<any> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/quizzes/${quizId}/submissions/${submissionId}`);
+        const response = await authenticatedJsonFetch<any>(`${API_BASE_URL}/quizzes/submissions/${submissionId}`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
@@ -405,7 +426,7 @@ export async function getQuizSubmission(quizId: number, submissionId: number) {
         return {
             id: submissionId,
             student_id: 1,
-            quiz_id: quizId,
+            quiz_id: 1,
             started_at: new Date().toISOString(),
             completed_at: new Date().toISOString(),
             score: 85,
@@ -415,9 +436,9 @@ export async function getQuizSubmission(quizId: number, submissionId: number) {
 }
 
 // Teacher-specific API functions
-export async function fetchStudents() {
+export async function fetchStudents(): Promise<any[]> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/analytics/students`);
+        const response = await authenticatedJsonFetch<any[]>(`${API_BASE_URL}/analytics/students`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
@@ -431,9 +452,9 @@ export async function fetchStudents() {
     }
 }
 
-export async function fetchStudentProgress(studentId: number) {
+export async function fetchStudentProgress(studentId: number): Promise<any> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/analytics/student/${studentId}/progress`);
+        const response = await authenticatedJsonFetch<any>(`${API_BASE_URL}/analytics/student/${studentId}/progress`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);
@@ -449,9 +470,9 @@ export async function fetchStudentProgress(studentId: number) {
     }
 }
 
-export async function fetchTeacherQuizzes() {
+export async function fetchTeacherQuizzes(): Promise<any[]> {
     try {
-        const response = await authenticatedJsonFetch(`${API_BASE_URL}/quizzes/teacher`);
+        const response = await authenticatedJsonFetch<any[]>(`${API_BASE_URL}/quizzes/teacher`);
         return response;
     } catch (error) {
         console.warn("API call failed (this is expected if backend is not running):", error);

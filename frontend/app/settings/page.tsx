@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { API_BASE_URL } from "@/lib/api-utils";
 import { ArrowLeft, Loader2, LogOut } from "lucide-react";
 import Link from "next/link";
 
@@ -39,7 +40,7 @@ export default function SettingsPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/auth/me`,
+        `${API_BASE_URL}/auth/me`,
         {
           method: "PUT",
           headers: {
@@ -78,7 +79,7 @@ export default function SettingsPage() {
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/auth/change-password`,
+        `${API_BASE_URL}/auth/change-password`,
         {
           method: "POST",
           headers: {

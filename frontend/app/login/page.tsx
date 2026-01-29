@@ -14,19 +14,21 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react"; // Added Suspense here
 import { useAuth } from "@/lib/auth-context";
 
-export default function LoginPage() {
+// Renamed the main logic to LoginContent
+function LoginContent() {
     const searchParams = useSearchParams();
-    const returnUrl = searchParams.get('return') || '';
+    // Changed 'return' to 'callbackUrl' as per the snippet, and removed the old returnUrl
+    const callbackUrl = searchParams.get('callbackUrl') || '/';
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false); // Kept loading state as it's used
     const [error, setError] = useState("");
     const [role, setRole] = useState<'student' | 'teacher'>('student'); // Default to student
-    const { login } = useAuth();
+    const { login } = useAuth(); // Kept original destructuring for login
     const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -39,10 +41,10 @@ export default function LoginPage() {
             if (success) {
                 // Wait for the cookie to be set before redirecting
                 await new Promise(resolve => setTimeout(resolve, 300));
-                
-                // If there's a return URL, redirect to it; otherwise, redirect based on role
-                if (returnUrl && returnUrl !== '/') {
-                    router.push(returnUrl);
+
+                // If there's a callback URL, redirect to it; otherwise, redirect based on role
+                if (callbackUrl && callbackUrl !== '/') {
+                    router.push(callbackUrl);
                 } else {
                     router.push(role === 'teacher' ? "/teacher-dashboard" : "/");
                 }
@@ -73,11 +75,10 @@ export default function LoginPage() {
                     <button
                         type="button"
                         onClick={() => setRole('student')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
-                            role === 'student'
-                                ? 'bg-white text-primary shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${role === 'student'
+                            ? 'bg-white text-primary shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                            }`}
                     >
                         <User size={16} />
                         Student
@@ -85,11 +86,10 @@ export default function LoginPage() {
                     <button
                         type="button"
                         onClick={() => setRole('teacher')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
-                            role === 'teacher'
-                                ? 'bg-white text-primary shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${role === 'teacher'
+                            ? 'bg-white text-primary shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                            }`}
                     >
                         <Users size={16} />
                         Teacher
@@ -136,7 +136,7 @@ export default function LoginPage() {
                             </div>
                         </div>
 
-                        <button 
+                        <button
                             type="submit"
                             disabled={loading}
                             className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-xl transition-all hover:bg-primary/90 hover:scale-[1.02] active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -165,7 +165,7 @@ export default function LoginPage() {
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <button 
+                        <button
                             type="button"
                             className="flex h-12 items-center justify-center gap-2 rounded-xl border bg-muted/10 px-4 text-sm font-bold transition-all hover:bg-muted/30"
                             onClick={() => alert("Google login not implemented yet")}
@@ -173,7 +173,7 @@ export default function LoginPage() {
                             <Chrome size={18} />
                             Google
                         </button>
-                        <button 
+                        <button
                             type="button"
                             className="flex h-12 items-center justify-center gap-2 rounded-xl border bg-muted/10 px-4 text-sm font-bold transition-all hover:bg-muted/30"
                             onClick={() => alert("GitHub login not implemented yet")}
@@ -197,5 +197,13 @@ export default function LoginPage() {
                 </Link>
             </div>
         </div>
+    );
+}
+
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="flex h-screen items-center justify-center">Loading...</div>}>
+            <LoginContent />
+        </Suspense>
     );
 }

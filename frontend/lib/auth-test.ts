@@ -3,15 +3,16 @@
 
 async function testAuthentication() {
   console.log('Testing authentication functionality...');
-  
+
   // Test 1: Check if AuthContext is available
-  if (typeof window !== 'undefined' && window.useAuth) {
+  const useAuth = (window as any).useAuth;
+  if (typeof window !== 'undefined' && useAuth) {
     console.log('✓ AuthContext is available');
-    
+
     // Get auth state
-    const authState = window.useAuth();
+    const authState = useAuth();
     console.log('Auth state:', authState);
-    
+
     if (authState.isAuthenticated) {
       console.log('✓ User is authenticated');
       console.log('User:', authState.user);
@@ -21,7 +22,7 @@ async function testAuthentication() {
   } else {
     console.log('⚠ AuthContext is not available in global scope');
   }
-  
+
   // Test 2: Check for auth tokens in localStorage
   const sessionToken = localStorage.getItem('session_token');
 
@@ -36,7 +37,7 @@ async function testAuthentication() {
   } else {
     console.log('ℹ No session token found in localStorage');
   }
-  
+
   // Test 3: Check if user data is stored
   // This would typically be handled by the AuthContext
   console.log('Authentication test completed.');

@@ -1,6 +1,7 @@
 'use client';
 
 import { useAuth } from '@/lib/auth-context';
+import { API_BASE_URL } from '@/lib/api-utils';
 import { useState } from 'react';
 
 export default function DebugAuthPage() {
@@ -11,7 +12,7 @@ export default function DebugAuthPage() {
   const checkToken = () => {
     const token = localStorage.getItem('session_token');
     const cookieToken = document.cookie.split(';').find(c => c.includes('session_token'));
-    
+
     setTokenInfo({
       localStorage: token,
       cookie: cookieToken,
@@ -22,14 +23,14 @@ export default function DebugAuthPage() {
   const testApiCall = async () => {
     try {
       const token = localStorage.getItem('session_token');
-      const response = await fetch('http://localhost:8000/api/auth/me', {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
         headers: {
           'X-Session-ID': token || '',
           'Content-Type': 'application/json',
         },
       });
-      
+
       const data = await response.json();
       setApiResponse({ status: response.status, data });
     } catch (error) {
@@ -40,7 +41,7 @@ export default function DebugAuthPage() {
   return (
     <div className="p-8 max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Auth Debug</h1>
-      
+
       <button
         onClick={checkToken}
         className="px-4 py-2 bg-blue-500 text-white rounded mr-2 mb-4"

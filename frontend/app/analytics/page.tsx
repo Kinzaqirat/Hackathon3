@@ -13,11 +13,11 @@ import {
     BrainCircuit
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchStats, fetchProgress } from "@/lib/api";
+import { fetchStats, fetchProgress, StudentStats, StudentProgress } from "@/lib/api";
 
 export default function AnalyticsPage() {
-    const [stats, setStats] = useState<any>(null);
-    const [progress, setProgress] = useState<any[]>([]);
+    const [stats, setStats] = useState<StudentStats | null>(null);
+    const [progress, setProgress] = useState<StudentProgress[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -41,28 +41,28 @@ export default function AnalyticsPage() {
     const performanceMetrics = [
         {
             name: "Mastery Level",
-            value: stats?.completed_exercises > 10 ? "Advanced" : "Beginner",
+            value: (stats?.completed_exercises ?? 0) > 10 ? "Advanced" : "Beginner",
             icon: ShieldCheck,
             color: "text-emerald-600",
             bg: "bg-emerald-50"
         },
         {
             name: "Success Rate",
-            value: `${Math.round(stats?.average_score || 0)}%`,
+            value: `${Math.round(stats?.average_score ?? 0)}%`,
             icon: BrainCircuit,
             color: "text-blue-600",
             bg: "bg-blue-50"
         },
         {
             name: "Python XP",
-            value: stats?.completed_exercises * 150 || 0,
+            value: (stats?.completed_exercises ?? 0) * 150,
             icon: Zap,
             color: "text-purple-600",
             bg: "bg-purple-50"
         },
         {
             name: "Exercises",
-            value: stats?.completed_exercises || 0,
+            value: stats?.completed_exercises ?? 0,
             icon: Target,
             color: "text-amber-600",
             bg: "bg-amber-50"
@@ -116,8 +116,8 @@ export default function AnalyticsPage() {
                                 {[1, 2, 3].map(i => <div key={i} className="h-12 bg-muted rounded-xl animate-pulse" />)}
                             </div>
                         ) : progress.length > 0 ? (
-                            progress.map((item: any) => (
-                                <div key={item.id} className="space-y-4">
+                            progress.map((item, index) => (
+                                <div key={index} className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <h4 className="text-lg font-black text-foreground/90 leading-none">Exercise #{item.exercise_id}</h4>

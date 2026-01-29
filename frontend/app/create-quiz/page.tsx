@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { API_BASE_URL } from "@/lib/api-utils";
 import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
 
@@ -60,7 +61,7 @@ export default function CreateQuizPage() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:8000/api/quizzes", {
+      const response = await fetch(`${API_BASE_URL}/quizzes`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

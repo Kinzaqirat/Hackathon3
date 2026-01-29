@@ -14,7 +14,7 @@ interface UserData {
  */
 export async function getServerAuthSession() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const token = cookieStore.get('session_token')?.value;
 
     if (!token) {
@@ -58,7 +58,7 @@ export async function getServerAuthSession() {
  */
 export async function requireAuth(requiredRole?: 'student' | 'teacher') {
   const session = await getServerAuthSession();
-  
+
   if (!session) {
     return false;
   }

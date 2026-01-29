@@ -14,10 +14,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useAuth } from "@/lib/auth-context";
 
-export default function RegisterPage() {
+function RegisterForm() {
     const searchParams = useSearchParams();
     const returnUrl = searchParams.get('return') || '';
 
@@ -80,11 +80,10 @@ export default function RegisterPage() {
                     <button
                         type="button"
                         onClick={() => setRole('student')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
-                            role === 'student'
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${role === 'student'
                                 ? 'bg-white text-primary shadow-sm'
                                 : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                            }`}
                     >
                         <User size={16} />
                         Student
@@ -92,11 +91,10 @@ export default function RegisterPage() {
                     <button
                         type="button"
                         onClick={() => setRole('teacher')}
-                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${
-                            role === 'teacher'
+                        className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-lg text-sm font-bold transition-all ${role === 'teacher'
                                 ? 'bg-white text-primary shadow-sm'
                                 : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                            }`}
                     >
                         <Users size={16} />
                         Teacher
@@ -145,14 +143,14 @@ export default function RegisterPage() {
                         {role === 'student' ? (
                             <div className="space-y-2">
                                 <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Grade Level</label>
-                                <select 
+                                <select
                                     value={gradeLevel}
                                     onChange={(e) => setGradeLevel(e.target.value)}
                                     className="flex h-12 w-full rounded-xl border border-input bg-muted/30 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none font-medium"
                                 >
                                     <option>Grade 10</option>
                                     <option>Grade 11</option>
-                                    <option selected>Grade 12</option>
+                                    <option>Grade 12</option>
                                     <option>University</option>
                                 </select>
                             </div>
@@ -199,7 +197,7 @@ export default function RegisterPage() {
                             </div>
                         </div>
 
-                        <button 
+                        <button
                             type="submit"
                             disabled={loading}
                             className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground shadow-xl transition-all hover:bg-primary/90 hover:scale-[1.02] active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -232,5 +230,17 @@ export default function RegisterPage() {
                 </Link>
             </div>
         </div>
+    );
+}
+
+export default function RegisterPage() {
+    return (
+        <Suspense fallback={
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <RegisterForm />
+        </Suspense>
     );
 }

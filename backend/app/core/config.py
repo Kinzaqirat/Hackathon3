@@ -35,12 +35,16 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
 
     # CORS
-    cors_origins: List[str] = Field(default=[
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "http://localhost:8080",
-        "https://learnflow.local",
-    ])
+    cors_origins: List[str] = Field(
+        default_factory=lambda: [
+            "http://localhost:3000",
+            "http://localhost:8000",
+            "http://localhost:8080",
+            "https://learnflow.local",
+            "https://hackathon3-frontend.vercel.app",
+        ]
+    )
+    cors_origins_env: str = ""  # Can override with env var
 
     model_config = SettingsConfigDict(env_file='.env', case_sensitive=True, extra='allow')
 

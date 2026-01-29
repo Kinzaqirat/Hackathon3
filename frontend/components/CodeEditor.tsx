@@ -143,14 +143,17 @@ export function CodeEditor({
                     onMount={(editor) => {
                         setIsEditorReady(true);
                         // Add Ctrl/Cmd+Enter shortcut for running code
-                        editor.addCommand(
-                            window.monaco.KeyMod.CtrlCmd | window.monaco.KeyCode.Enter,
-                            () => {
-                                if (!readOnly && value) {
-                                    handleRun();
+                        const monaco = (window as any).monaco;
+                        if (monaco) {
+                            editor.addCommand(
+                                monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
+                                () => {
+                                    if (!readOnly && value) {
+                                        handleRun();
+                                    }
                                 }
-                            }
-                        );
+                            );
+                        }
                     }}
                     loading={
                         <div className="flex h-full items-center justify-center">

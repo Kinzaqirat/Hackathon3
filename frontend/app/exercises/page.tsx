@@ -18,8 +18,9 @@ import { useSearchParams } from "next/navigation";
 import { fetchExercises, fetchLevels } from "@/lib/api";
 import { useAuthRedirect } from "@/lib/use-auth-redirect";
 
-export default function ExercisesPage() {
-    const { isAuthenticated, isLoading: authLoading } = useAuthRedirect('any', '/login');
+import { Suspense } from "react";
+
+function ExercisesContent() {
     const searchParams = useSearchParams();
     const topicId = searchParams.get("topic_id");
 
@@ -29,7 +30,7 @@ export default function ExercisesPage() {
     const [selectedLevel, setSelectedLevel] = useState("All");
 
     // Combine auth loading and page loading states
-    const isLoading = authLoading || pageLoading;
+    const isLoading = pageLoading;
 
     useEffect(() => {
         async function loadData() {
@@ -291,5 +292,14 @@ export default function ExercisesPage() {
                 </div>
             )}
         </div>
+    );
+}
+
+export default function ExercisesPage() {
+    useAuthRedirect('any', '/login');
+    return (
+        <Suspense fallback={<div>Loading exercises...</div>}>
+            <ExercisesContent />
+        </Suspense>
     );
 }

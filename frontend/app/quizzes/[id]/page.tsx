@@ -28,7 +28,7 @@ export default function QuizTakingPage() {
     const router = useRouter();
     const [quiz, setQuiz] = useState<any>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [answers, setAnswers] = useState<{[key: number]: string}>({});
+    const [answers, setAnswers] = useState<{ [key: number]: string }>({});
     const [timeRemaining, setTimeRemaining] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -104,10 +104,9 @@ export default function QuizTakingPage() {
         // Submit current answer
         if (answers[currentQuestion.id]) {
             await submitQuizAnswer(
-                parseInt(params.id as string),
                 submissionId,
                 currentQuestion.id,
-                answers[currentQuestion.id]
+                parseInt(answers[currentQuestion.id]) || 0
             );
         }
 
@@ -130,8 +129,8 @@ export default function QuizTakingPage() {
 
         setIsSubmitting(true);
         try {
-            await completeQuiz(parseInt(params.id as string), submissionId);
-            const submission = await getQuizSubmission(parseInt(params.id as string), submissionId);
+            await completeQuiz(submissionId);
+            const submission = await getQuizSubmission(submissionId);
             setFinalScore(submission.score);
             setQuizCompleted(true);
         } catch (error) {
@@ -345,14 +344,14 @@ export default function QuizTakingPage() {
                             )}
 
                             {(currentQuestion?.question_type === 'short_answer' ||
-                              currentQuestion?.question_type === 'code') && (
-                                <Textarea
-                                    value={answers[currentQuestion.id] || ""}
-                                    onChange={(e) => handleAnswerChange(e.target.value)}
-                                    placeholder="Type your answer here..."
-                                    className="min-h-[120px]"
-                                />
-                            )}
+                                currentQuestion?.question_type === 'code') && (
+                                    <Textarea
+                                        value={answers[currentQuestion.id] || ""}
+                                        onChange={(e) => handleAnswerChange(e.target.value)}
+                                        placeholder="Type your answer here..."
+                                        className="min-h-[120px]"
+                                    />
+                                )}
                         </div>
                     </div>
                 </CardContent>
